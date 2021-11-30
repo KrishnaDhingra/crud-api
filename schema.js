@@ -6,7 +6,6 @@ try{
             type: String,
             required: true
         },
-        age: Number,
         email: {
             type: String,
             required: true
@@ -14,8 +13,7 @@ try{
         password: {
             type: String,
             required: true
-        },
-        createdAt: String
+        }
     })
     
     const LogsSchema = new mongoose.Schema({

@@ -33,6 +33,25 @@ app.get("/users", (req, res) => {
     }
 })
 
+app.get("/users/:parameter/:value", (req, res) => {
+    if(req.params.parameter === "username" || req.params.parameter === "email" && req.params.value !== undefined){
+
+        getData()
+        async function getData() {
+
+            const data = await User.where(req.params.parameter).equals(req.params.value)
+            res.json(data)
+
+            const log = await Logs.create({
+                message: `List of users were requested to be shown at ${Date()} and the parameter was ${req.params.parameter} and the value was ${req.params.value}`
+            })
+        }
+
+    }else{
+        res.json({msg: "The parameter should be ehter username or email and a value is must"})
+    }
+})
+// This will display all the logs
 app.get("/logs", (req, res) => {
 
     try{
@@ -52,7 +71,6 @@ app.get("/logs", (req, res) => {
         console.log(e.message)
     }
 })
-
 
 // This will create a new user
 app.post("/users", (req, res) => {
@@ -121,7 +139,7 @@ async function createUser(username, email, password){
         })
 
         const log = await Logs.create({
-            message: "A new user was created with the following credentials",
+            message: `A new user was created at ${Date()} with the following credentials`,
             username: username,
             password: password,
             email: email,
@@ -138,33 +156,43 @@ async function createUser(username, email, password){
 
 async function updateUser(id, preUsername, preEmail, prePassword, Username, Password, newEmail, newUsername, newPassword){
 
-    getData()
+    try{
 
-    async function getData(){
+        getData()
+    
+        async function getData(){
+            const username = newUsername ? newUsername : preUsername
+            const email = newEmail ? newEmail : preEmail
+            const password = newPassword ? newPassword : prePassword
+    
+            console.log(username, email, password )
+            const data = await User.where("_id").equals(id).updateMany({"username": username, "email": email, "password": password})
+        }
+    
         const username = newUsername ? newUsername : preUsername
         const email = newEmail ? newEmail : preEmail
         const password = newPassword ? newPassword : prePassword
 
-        console.log(username, email, password )
-        const data = await User.where("_id").equals(id).updateMany({"username": username, "email": email, "password": password})
+        // making a changing list that will tell that what all was changed when the user updated it's info
+        changeList = []
+        username === preUsername ? null : changeList.push("username")
+        email === preEmail ? null : changeList.push("email")
+        password === prePassword ? null : changeList.push("password")
+    
+        const log = await Logs.create({
+            message: `The user changed ${changeList} at ${Date()}`,
+            username: username,
+            password: password,
+            newEmail: email,
+            newUsername: username,
+            newPassword: password
+        })
+    
+        console.log(log)
+
+    } catch(e){
+        console.log(e.message)
     }
-
-    // making a changing list that will tell that what all was changed when the user updated it's info
-    changeList = []
-    username === preUsername ? null : changeList.push("username")
-    email === preEmail ? null : changeList.push("email")
-    password === prePassword ? null : changeList.push("password")
-
-    const log = await Logs.create({
-        message: `The user changed ${changeList} at ${Date()}`,
-        username: username,
-        password: password,
-        newEmail: email,
-        newUsername: username,
-        newPassword: password
-    })
-
-    console.log(log)
 }
 
 app.listen(PORT, () => {
